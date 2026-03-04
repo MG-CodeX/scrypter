@@ -37,10 +37,10 @@ def create_encrypted_file(path, data):
         with open(path, "wb") as f:
             f.write(data)
         print("File encrypted successfully")
-        sys.exit(0)
+        return 0
     except OSError:
         print("Unable to create encrypted file")
-        sys.exit(1)
+        return 1
 
 def create_decrypted_file(path, data):
     """
@@ -58,10 +58,10 @@ def create_decrypted_file(path, data):
         with open(path, "wb") as f:
             f.write(data)
         print("File decrypted successfully")
-        sys.exit(0)
+        return 0
     except OSError:
         print("Unable to create decrypted file")
-        sys.exit(1)
+        return 1
 
 def create_key_file(path, key):
     """
@@ -79,10 +79,10 @@ def create_key_file(path, key):
         with open(path, "wb") as f:
             f.write(key)
         print("Key created successfully")
-        sys.exit(0)
+        return 0
     except OSError:
         print("Unable to create key file")
-        sys.exit(1)
+        return 1
 
 def encrypt_file(args):
     """
@@ -105,41 +105,41 @@ def encrypt_file(args):
 
     if not os.path.exists(file_path):
         print("File path doesn't exist")
-        sys.exit(1)
+        return 1
     if not os.path.exists(key_path):
         print("Key path doesn't exist") 
-        sys.exit(1)
+        return 1
 
     try:
         with open(key_path, "rb") as f:
             key = f.read()
     except OSError:
         print("Unable to access key")
-        sys.exit(1)
-    
+        return 1
+
     try:
         fernet = Fernet(key)
     except ValueError:
         print("Corrupted or empty key")
-        sys.exit(1)
+        return 1
 
     try:
         with open(file_path, "rb") as f:
             data = f.read()
     except OSError:
         print("Unable to access file")
-        sys.exit(1)
+        return 1
 
     encrypted_data = fernet.encrypt(data)
     encrypted_file_path = file_path + ".enc"
 
     if not os.path.exists(encrypted_file_path) or args.force:
-        create_encrypted_file(encrypted_file_path, encrypted_data)
+        return create_encrypted_file(encrypted_file_path, encrypted_data)
     elif confirm_overwrite(encrypted_file_path):
-        create_encrypted_file(encrypted_file_path, encrypted_data)
+        return create_encrypted_file(encrypted_file_path, encrypted_data)
     else:
         print("Aborting...")
-        sys.exit(1)
+        return 1
 
 def decrypt_file(args):
     """
@@ -163,50 +163,50 @@ def decrypt_file(args):
 
     if not os.path.exists(file_path):
         print("File path doesn't exist")
-        sys.exit(1)
+        return 1
     if not os.path.exists(key_path):
         print("Key path doesn't exist") 
-        sys.exit(1)
+        return 1
 
     try:
         with open(key_path, "rb") as f:
             key = f.read()
     except OSError:
         print("Unable to access key")
-        sys.exit(1)
+        return 1
 
     try:
         fernet = Fernet(key)
     except ValueError:
         print("Corrupted or empty key")
-        sys.exit(1)
-
+        return 1
+    
     try:
         with open(file_path, "rb") as f:
             data = f.read()
     except OSError:
         print("Unable to access file")
-        sys.exit(1)
+        return 1
 
     try:
         decrypted_data = fernet.decrypt(data)
     except InvalidToken:
         print("Invalid key")
-        sys.exit(1)
-        
+        return 1
+
     if file_path.endswith(".enc"):
         decrypted_file_path = file_path.removesuffix(".enc")
     else:
         print("Unsupported file type")
-        sys.exit(1)
+        return 1
 
     if not os.path.exists(decrypted_file_path) or args.force:
-        create_decrypted_file(decrypted_file_path, decrypted_data)
+        return create_decrypted_file(decrypted_file_path, decrypted_data)
     elif confirm_overwrite(decrypted_file_path):
-        create_decrypted_file(decrypted_file_path, decrypted_data)
+        return create_decrypted_file(decrypted_file_path, decrypted_data)
     else:
         print("Aborting...")
-        sys.exit(1)
+        return 1
 
 def generate_key(args):
     """
@@ -227,12 +227,12 @@ def generate_key(args):
     key = Fernet.generate_key()
 
     if not os.path.exists(key_path) or args.force:
-        create_key_file(key_path, key)
+        return create_key_file(key_path, key)
     elif confirm_overwrite(key_path):
-        create_key_file(key_path, key)
+        return create_key_file(key_path, key)
     else:
         print("Aborting...")
-        sys.exit(1)
+        return 1
 
 def main():
     """
@@ -305,11 +305,11 @@ def main():
     key_parser.set_defaults(func=generate_key)
 
     args = parser.parse_args()
-    args.func(args)
+    return args.func(args)
 
 if __name__ == "__main__":
     try:
-        main()
+        sys.exit(main())
     except KeyboardInterrupt:
         print("Operation Cancelled")
         sys.exit(1)
