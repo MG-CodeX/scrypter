@@ -194,6 +194,16 @@ def decrypt_file(args):
         print("Invalid key")
         return 1
 
+    if args.print:
+        try:
+            print(decrypted_data.decode("utf-8"))
+        except UnicodeDecodeError:
+            print("Warning, file contains characters that can't be decoded")
+            print(decrypted_data[:500])
+            if len(decrypted_data) > 500:
+                print("... Data truncated")
+        return 0
+
     if file_path.endswith(".enc"):
         decrypted_file_path = file_path.removesuffix(".enc")
     else:
@@ -287,6 +297,7 @@ def main():
         "-f", "--force", action="store_true", 
         help="Overwrite existing decrypted file without prompting"
     )
+    decrypt_parser.add_argument("-p", "--print", action=argparse.BooleanOptionalAction, default=False, help="Prints the decrypted file contents to the terminal")
     decrypt_parser.set_defaults(func=decrypt_file)
 
     key_parser = subparsers.add_parser(
